@@ -1,22 +1,18 @@
 /* 
- * File:   main.cpp
- * Author: kagancansit
- * Information Source: https://www.youtube.com/watch?v=CFe5LQOPdfk
+ * File: echoserver.cpp || Author: kagancansit
+ * Information Sources: 
+ *          https://www.youtube.com/watch?v=CFe5LQOPdfk
+ *          https://www.yusufsezer.com.tr/c-cpp-soket/
  * Created on August 2, 2022, 10:34 AM
- * 
+ */
+
+/*
  * SERVER
  * g++ -std=c++11 echo_server.cpp -o server
  * ./server 5000
  * 
  * CLIENT
  * nc localhost 5000
- */
-
-/*
- * Echo Sunucusu
- * 1 -> Socket  2 -> Bind   3 -> Listen
- * 4 -> Accept  5 -> Recv   6 -> Send
- * 7 -> Goto 5
  */
 
 #include <iostream>
@@ -30,21 +26,25 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-    //Sunucu düzenlemesinde argv[0] her zaman yürütülebilir dosyalar için ayrılır. Sunucu yapısını korumak için yürütülebilir dosya, port numaraları parametreleri kontrol ediyoruz.
+    /*
+     * Sunucu düzenlemesinde argv[0] her zaman yürütülebilir dosyalar için ayrılır.
+     * Sunucu yapısını korumak için argv[0] kullanılmamasını kontrol ediyoruz.
+     * Kontrolü sağlayıp, port numarasını parametre olarak alıyoruz.
+     */
     if (argc < 2) {
         cout << "Usage: " << argv[0] << " <Port Number>" << endl;
         return 0;
     }
 
-    //Port numarası bağlantı ve iletişim için gereklidir. Port numarasının parametre olarak alınması. 
+    //Port numarasının alınması. 
     int portNumber = atoi(argv[1]);
-    
+
     //Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP)
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);
 
 
-    // Bind -- Dinelenilecek ve iletişime geçilecek olan IP Adresi ve Port'un ilişkilendirilmesi.
-    struct sockaddr_in address;     //Socket bilgilerini tanımlamamış için hazır struct yapısı.
+    // Bind -- Dinlenilecek ve iletişime geçilecek olan IP Adresi ve Port'un ilişkilendirilmesi.
+    struct sockaddr_in address; //Socket bilgilerini tanımlamamış için hazır struct yapısı.
     memset(&address, 0, sizeof (address));
     address.sin_family = AF_INET; //(IPv4)
     address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler.
@@ -53,8 +53,7 @@ int main(int argc, char** argv) {
     if (bindValue < 0) {
         perror("- Bağlantı sağlanamadı.\n");
         return 1;
-    }
-    else
+    } else
         cout << "\nBaşarıyla socket'e bağlanıldı." << endl;
 
     //Listen
@@ -63,7 +62,7 @@ int main(int argc, char** argv) {
         perror("Socket dinleme başarısız. \n");
         return 1;
     } else
-        cout << "\nSunucu " << portNumber << " numaralı socket/port dinliyor." << endl;
+        cout << "\nSunucu " << portNumber << " numaralı portu dinliyor." << endl;
 
 
 
@@ -73,7 +72,7 @@ int main(int argc, char** argv) {
     socklen_t remote_addrlen = sizeof (remote_address);
 
 
-    //Bağlantu kurmak isteyen Client hakkındaki verileri accept verisi ile bir socket adresi struct'ı içerisine tanımlıyoruz.
+    //Bağlantı kurmak isteyen Client hakkındaki verileri accept verisi ile bir socket adresi struct'ı içerisine tanımlıyoruz.
     cout << "\nBağlantı bekleniyor." << endl;
     int client_socket = accept(socketNum, (struct sockaddr *) &remote_address, &remote_addrlen);
     if (client_socket < 0) // 1 Hata - 0 Client'in bağlantısı kesildi.
@@ -84,6 +83,17 @@ int main(int argc, char** argv) {
         perror("Client'in bağlantısı kesildi veya sonlandırıldı.");
         return 1;
     }
+
+    //------------------------
+    string response = "Başarıyla sunucuya bağlandınız.\nMesajınız: ";
+    int bytes_sent = send(client_socket, response.c_str(), response.length(), 0);
+    if (bytes_sent < 0) {
+        perror("Gönderilemedi.");
+        return 1;
+    }
+    //------------------------
+
+
 
 
     string client_ip = inet_ntoa(remote_address.sin_addr);
@@ -112,13 +122,13 @@ int main(int argc, char** argv) {
 
         //Send
         string response;
-        response = "Merhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + to_string(remote_port) + "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.";
+        response = "\nMerhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + to_string(remote_port) + "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.";
         int bytes_sent = send(client_socket, response.c_str(), response.length(), 0);
         if (bytes_sent < 0) {
             perror("Gönderilemedi.");
             return 1;
         }
-        
+
     }
 
     cout << "Socket kapatılıyor." << endl;
