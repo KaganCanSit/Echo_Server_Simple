@@ -20,14 +20,11 @@
  */
 
 #include <iostream>
-#include <cstdlib>
-#include <atomic>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <string>
-#include <strings.h>
 
 using namespace std;
 
@@ -39,44 +36,41 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    //Port numarası bağlantı ve iletişim için gereklidir. 
+    //Port numarası bağlantı ve iletişim için gereklidir. Port numarasının parametre olarak alınması. 
     int portNumber = atoi(argv[1]);
-
-
-    /* 
-     * Socket
-     * 1 -> Domain = AF_UNIX (Unix dosyası), AF_INET (IPv4), AF_INET6 (IPv6)  
-     * 2 -> Type = SOCK_STREAM (TCP), SOCK_DGRAM (UDP), SOCK_RAW
-     */
+    
+    //Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP)
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);
 
 
-    // Bind -- Bağlantı adresi üzeirnde nereye bağlanacağımı bilmemiz adres vb. bilgilerin bir yapı içerisinde tutmamız gerekir.
-    struct sockaddr_in address;
+    // Bind -- Dinelenilecek ve iletişime geçilecek olan IP Adresi ve Port'un ilişkilendirilmesi.
+    struct sockaddr_in address;     //Socket bilgilerini tanımlamamış için hazır struct yapısı.
     memset(&address, 0, sizeof (address));
     address.sin_family = AF_INET; //(IPv4)
-    address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler. Sayıların en önemli bayt ilk olacak şekilde ağ bayt sırasına göre bellekte saklanmasını sağlar.
+    address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler.
 
     int bindValue = bind(socketNum, (struct sockaddr *) &address, sizeof (address));
     if (bindValue < 0) {
         perror("- Bağlantı sağlanamadı.\n");
         return 1;
     }
+    else
+        cout << "\nBaşarıyla socket'e bağlanıldı." << endl;
 
     //Listen
-    int listenValue = listen(socketNum, 1);
+    int listenValue = listen(socketNum, 1); //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz.
     if (listenValue < 0) {
-        perror("Dineleme Başarısız. \n");
+        perror("Socket dinleme başarısız. \n");
         return 1;
     } else
-        cout << "\nSunucu " << portNumber << " numaralı portu dinliyor." << endl;
+        cout << "\nSunucu " << portNumber << " numaralı socket/port dinliyor." << endl;
 
 
 
     //Accept
     struct sockaddr_in remote_address;
-    memset(&address, 0, sizeof (address));
-    socklen_t remote_addrlen = sizeof (address);
+    memset(&remote_address, 0, sizeof (remote_address));
+    socklen_t remote_addrlen = sizeof (remote_address);
 
 
     //Bağlantu kurmak isteyen Client hakkındaki verileri accept verisi ile bir socket adresi struct'ı içerisine tanımlıyoruz.
@@ -108,7 +102,7 @@ int main(int argc, char** argv) {
             return 1;
         }
         if (bytes_received == 0) {
-            cout << "IP: " << client_ip << " Port :" << remote_port << "olan bağlantı sonlandırıldı." << endl;
+            cout << "IP: " << client_ip << " Port :" << remote_port << " olan bağlantı sonlandırıldı." << endl;
             break;
         }
         if (buffer[bytes_received - 1] == '\n') {
@@ -118,13 +112,13 @@ int main(int argc, char** argv) {
 
         //Send
         string response;
-        response = "Gönderilme Bilgileri-> Adres: " + client_ip + " Port Numarası: " + to_string(remote_port) + "\nMesajın: " + string(buffer) + "\n";
+        response = "Merhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + to_string(remote_port) + "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.";
         int bytes_sent = send(client_socket, response.c_str(), response.length(), 0);
         if (bytes_sent < 0) {
             perror("Gönderilemedi.");
             return 1;
         }
-
+        
     }
 
     cout << "Socket kapatılıyor." << endl;

@@ -9,19 +9,19 @@ CND_DISTDIR=dist
 # Debug configuration
 CND_PLATFORM_Debug=GNU-Linux
 CND_ARTIFACT_DIR_Debug=dist/Debug/GNU-Linux
-CND_ARTIFACT_NAME_Debug=basic_echo_server
-CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/basic_echo_server
+CND_ARTIFACT_NAME_Debug=echo_server_simple
+CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/echo_server_simple
 CND_PACKAGE_DIR_Debug=dist/Debug/GNU-Linux/package
-CND_PACKAGE_NAME_Debug=basicechoserver.tar
-CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/basicechoserver.tar
+CND_PACKAGE_NAME_Debug=echoserversimple.tar
+CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/echoserversimple.tar
 # Release configuration
 CND_PLATFORM_Release=GNU-Linux
 CND_ARTIFACT_DIR_Release=dist/Release/GNU-Linux
-CND_ARTIFACT_NAME_Release=basic_echo_server
-CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/basic_echo_server
+CND_ARTIFACT_NAME_Release=echo_server_simple
+CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/echo_server_simple
 CND_PACKAGE_DIR_Release=dist/Release/GNU-Linux/package
-CND_PACKAGE_NAME_Release=basicechoserver.tar
-CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/basicechoserver.tar
+CND_PACKAGE_NAME_Release=echoserversimple.tar
+CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/echoserversimple.tar
 #
 # include compiler specific variables
 #

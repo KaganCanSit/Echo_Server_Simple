@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=Basic_Echo_Server
+PROJECTNAME=Echo_Server_Simple
 
 # Active Configuration
 DEFAULTCONF=Debug
