@@ -14,12 +14,8 @@
 
 /*
  * Echo Sunucusu
- * 1 -> Socket
- * 2 -> Bind
- * 3 -> Listen
- * 4 -> Accept
- * 5 -> Recv
- * 6 -> Send
+ * 1 -> Socket  2 -> Bind   3 -> Listen
+ * 4 -> Accept  5 -> Recv   6 -> Send
  * 7 -> Goto 5
  */
 
