@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);
 
 
-    // Bind -- Dinlenilecek ve iletişime geçilecek olan IP Adresi ve Port'un ilişkilendirilmesi.
+    // Bind -- Sunucunun dinleme yapabilmesi ve iletişime geçebilmesi için port tanımı.
     struct sockaddr_in address; //Socket bilgilerini tanımlamamış için hazır struct yapısı.
     memset(&address, 0, sizeof (address));
     address.sin_family = AF_INET; //(IPv4)
