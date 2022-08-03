@@ -2,9 +2,8 @@
  * File: echoserver.cpp || Author: kagancansit
  * Information Sources: https://www.youtube.com/watch?v=CFe5LQOPdfk --- https://www.yusufsezer.com.tr/c-cpp-soket/
  * Created on August 2, 2022, 10:34 AM
- */
-
-/*
+ * 
+ * Usage
  * SERVER
  * g++ -std=c++11 echo_server.cpp -o server
  * ./server 5000
@@ -32,7 +31,7 @@ int main(int argc, char** argv) {
     int portNumber =  atoi(argv[1]);
     
     //Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
-    //Habrleşme için port tanımı.
+    //Haberleşme için port tanımı.
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);   
     
     // Sunucu ve client için socket ip ilişkilendirilmesi.
