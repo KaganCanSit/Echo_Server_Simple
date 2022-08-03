@@ -1,6 +1,6 @@
 /* 
  * File: echoserver.cpp || Author: kagancansit
- * Information Sources: https://www.youtube.com/watch?v=CFe5LQOPdfk --- https://www.yusufsezer.com.tr/c-cpp-soket/
+ * Information Sources: https://www.youtube.com/watch?v=CFe5LQOPdfk --- https://www.yusufsezer.com.tr/c-cpp-soket/ -- https://my.eng.utah.edu/~cs4400/concurrency.pdf
  * Created on August 2, 2022, 10:34 AM
  * 
  * Usage
@@ -19,17 +19,58 @@
 #include <string.h>
 #include <string>
 
-int main(int argc, char** argv) {
-    
-    //Haberleşme için server'ın kullacığı port numarasının alınması.
+//İçerik aktarımı için ara bellek tanımlanması
+#define BUFF_LEN 1024
+char buffer[BUFF_LEN];
+
+//Haberleşme için server'ın kullacığı port numarasının alınması.
+int getPortNumber(int argc, char** argv)
+{
     if (argc < 2) {
         std::cout << "Usage: " << argv[0] << " <Port Number>" << std::endl;
         return 0;
     } 
-    int portNumber =  atoi(argv[1]);
+    return atoi(argv[1]);
+}
+
+//Bind - Bağlanma İşlemi
+void bindingOperations(int socketNum, sockaddr_in socketAddress)
+{
+    if ((bind(socketNum, (struct sockaddr *) &socketAddress, sizeof (socketAddress)))< 0) 
+    {
+        perror("- Bağlantı sağlanamadı.\n");
+        exit(0);
+    } 
+    else
+        std::cout << "\nBaşarıyla socket'e bağlanıldı." << std::endl;
+}
+
+//Listen - Dinleme İşlemleri
+void listeningOperations(int socketNum, int portNum)
+{
+    //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
+    if ((listen(socketNum, 1)) < 0) 
+    {
+        perror("Socket dinleme başarısız. \n");
+        return 1;
+    } else
+        std::cout << "\nSunucu " << portNum << " numaralı portu dinliyor. Bağlantı bekleniyor." << std::endl;
+}
+
+//Socket kapatma işlemi.
+void closeSocket(int socketNum)
+{
+    std::cout << "Socket kapatılıyor.\n" << std::endl;
+    shutdown(socketNum, SHUT_RDWR);
+}
+
+int main(int argc, char** argv) {
+
+    //Port numarasının alınması.
+    int portNumber =  getPortNumber(argc, argv);
     
-    //Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
-    //Haberleşme için port tanımı.
+    
+    //Haberleşme için port tanımı. --- Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);   
     
     // Sunucu ve client için socket ip ilişkilendirilmesi.
@@ -41,28 +82,11 @@ int main(int argc, char** argv) {
     memset(&client_address, 0, sizeof (client_address));
     socklen_t remote_addrlen = sizeof (client_address);
     
-    //İçerik aktarımı için ara bellek tanımlanması
-    int BUFF_LEN = 1024;
-    char buffer[BUFF_LEN];
-    
     //--BIND--
-    if ((bind(socketNum, (struct sockaddr *) &server_address, sizeof (server_address)))< 0) 
-    {
-        perror("- Bağlantı sağlanamadı.\n");
-        return 1;
-    } 
-    else
-        std::cout << "\nBaşarıyla socket'e bağlanıldı." << std::endl;
-
+    bindingOperations(socketNum, server_address);
 
     //--LISTEN--
-    //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
-    if ((listen(socketNum, 1)) < 0) 
-    {
-        perror("Socket dinleme başarısız. \n");
-        return 1;
-    } else
-        std::cout << "\nSunucu " << portNumber << " numaralı portu dinliyor. Bağlantı bekleniyor." << std::endl;
+    listeningOperations(socketNum, portNumber);
 
 
     //--ACCEPT--
@@ -105,8 +129,15 @@ int main(int argc, char** argv) {
 
         //--SEND--
         std::string response;
-        response = "\nMerhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + std::to_string(remote_port) +
-                "}\nBana iletmiş olduğun mesajın: " + std::string(buffer) + "\nMesajını aldım.\n\n";
+        response = std::string(buffer) + " _Veri Alındı.\n";
+        
+        //Eğer client tarafından 'exit' girilirse client socketini kapat. 
+        if(std::string(buffer)=="exit")
+        {
+            std::cout<< client_ip+ "IP adresine sahip client için çıkış işlemi başlattı.";
+            closeSocket(client_socket);
+        }
+        
         if ((send(client_socket, response.c_str(), response.length(), 0))< 0) 
         {
             perror("Cevap gönderilemedi.");
@@ -114,8 +145,7 @@ int main(int argc, char** argv) {
         }
     }
     
-    std::cout << "Socket kapatılıyor." << std::endl;
-    shutdown(client_socket, SHUT_RDWR);
+    closeSocket(client_socket);
     
     return 0;
 }
