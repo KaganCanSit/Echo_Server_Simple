@@ -22,19 +22,14 @@
 
 using namespace std;
 
-
-//Haberleşme için server'ın kullacığı port numarasının alınması.
-int getPortNumber(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+    
+    //Haberleşme için server'ın kullacığı port numarasının alınması.
     if (argc < 2) {
         cout << "Usage: " << argv[0] << " <Port Number>" << endl;
         return 0;
     } 
-    return atoi(argv[1]);
-}
-
-int main(int argc, char** argv) {
-    int portNumber = getPortNumber(argc, argv);
+    int portNumber =  atoi(argv[1]);
     
     //Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
     //Habrleşme için port tanımı.
@@ -58,8 +53,10 @@ int main(int argc, char** argv) {
     {
         perror("- Bağlantı sağlanamadı.\n");
         return 1;
-    } else
+    } 
+    else
         cout << "\nBaşarıyla socket'e bağlanıldı." << endl;
+
 
     //--LISTEN--
     //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazlaa istek sonucu parametre sonrası kabul edilmez.
@@ -112,7 +109,7 @@ int main(int argc, char** argv) {
         //--SEND--
         string response;
         response = "\nMerhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + to_string(remote_port) +
-                "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.\n";
+                "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.\n\n";
         if ((send(client_socket, response.c_str(), response.length(), 0))< 0) 
         {
             perror("Cevap gönderilemedi.");
