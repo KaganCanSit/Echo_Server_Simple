@@ -19,13 +19,11 @@
 #include <string.h>
 #include <string>
 
-using namespace std;
-
 int main(int argc, char** argv) {
     
     //Haberleşme için server'ın kullacığı port numarasının alınması.
     if (argc < 2) {
-        cout << "Usage: " << argv[0] << " <Port Number>" << endl;
+        std::cout << "Usage: " << argv[0] << " <Port Number>" << std::endl;
         return 0;
     } 
     int portNumber =  atoi(argv[1]);
@@ -54,17 +52,17 @@ int main(int argc, char** argv) {
         return 1;
     } 
     else
-        cout << "\nBaşarıyla socket'e bağlanıldı." << endl;
+        std::cout << "\nBaşarıyla socket'e bağlanıldı." << std::endl;
 
 
     //--LISTEN--
-    //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazlaa istek sonucu parametre sonrası kabul edilmez.
+    //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
     if ((listen(socketNum, 1)) < 0) 
     {
         perror("Socket dinleme başarısız. \n");
         return 1;
     } else
-        cout << "\nSunucu " << portNumber << " numaralı portu dinliyor. Bağlantı bekleniyor." << endl;
+        std::cout << "\nSunucu " << portNumber << " numaralı portu dinliyor. Bağlantı bekleniyor." << std::endl;
 
 
     //--ACCEPT--
@@ -81,9 +79,9 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    string client_ip = inet_ntoa(client_address.sin_addr); //inet_ntoa -> Bilgisayar adresini IPv4 olarak ondalık diziye dönüştürür.
+    std::string client_ip = inet_ntoa(client_address.sin_addr); //inet_ntoa -> Bilgisayar adresini IPv4 olarak ondalık diziye dönüştürür.
     int remote_port = ntohs(client_address.sin_port); //htons fonksiyonun tersini gerçekleştirir.
-    cout << "Yeni bağlantı sağlandı. IP: " << client_ip << " Port:" << remote_port << endl;
+    std::cout << "Yeni bağlantı sağlandı. IP: " << client_ip << " Port:" << remote_port << std::endl;
 
     while (1) {
         memset(buffer, 0, BUFF_LEN); //Client'in kullandığı ara belleği her bağlantı öncesi temizliyoruz.
@@ -96,19 +94,19 @@ int main(int argc, char** argv) {
         }
         if (bytes_received == 0) 
         {
-            cout << "IP: " << client_ip << " Port :" << remote_port << " olan bağlantı sonlandırıldı." << endl;
+            std::cout << "IP: " << client_ip << " Port :" << remote_port << " olan bağlantı sonlandırıldı." << std::endl;
             break;
         }
         if (buffer[bytes_received - 1] == '\n') 
         {
             buffer[bytes_received - 1] = 0;
         }
-        cout << "Client Mesajı: \"" << buffer << "\"" << endl;
+        std::cout << "Client Mesajı: \"" << buffer << "\"" << std::endl;
 
         //--SEND--
-        string response;
-        response = "\nMerhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + to_string(remote_port) +
-                "}\nBana iletmiş olduğun mesajın: " + string(buffer) + "\nMesajını aldım.\n\n";
+        std::string response;
+        response = "\nMerhaba Client! {Adres Bilgilerin -> IP: " + client_ip + " Port Numarası: " + std::to_string(remote_port) +
+                "}\nBana iletmiş olduğun mesajın: " + std::string(buffer) + "\nMesajını aldım.\n\n";
         if ((send(client_socket, response.c_str(), response.length(), 0))< 0) 
         {
             perror("Cevap gönderilemedi.");
@@ -116,7 +114,7 @@ int main(int argc, char** argv) {
         }
     }
     
-    cout << "Socket kapatılıyor." << endl;
+    std::cout << "Socket kapatılıyor." << std::endl;
     shutdown(client_socket, SHUT_RDWR);
     
     return 0;
