@@ -16,9 +16,8 @@
 #include <string>
 #include <thread>
 
-//İçerik aktarımı için ara bellek tanımlanması
+//İçerik aktarımı için ara bellek değer tanımı.
 #define BUFF_LEN 1024
-char buffer[BUFF_LEN];
 
 //Donanımın max. kaldırabileceği thread sayısı döndürür.
 static int max_thread = std::thread::hardware_concurrency();
@@ -27,11 +26,10 @@ static int max_thread = std::thread::hardware_concurrency();
 int getPortNumber(int, char**);
 void bindingOperations(int, sockaddr_in);
 void listeningOperations(int, int);
-int acceptingOperations(int, sockaddr_in, socklen_t);
-void recvOperations(int);
-void sendingOperations(int);
+int acceptingOperations(int, sockaddr_in);
+void recvOperations(int, char[]);
+void sendingOperations(int, char[]);
 void commClients(int);
-void closeSocket(int);
 
 
 int main(int argc, char** argv) {
@@ -43,24 +41,19 @@ int main(int argc, char** argv) {
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);
 
     // Sunucu ve client için socket ip ilişkilendirilmesi.
-    struct sockaddr_in server_address, client_address;
+    struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof (server_address));
     server_address.sin_family = AF_INET; //(IPv4)
     server_address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler.
-
-    memset(&client_address, 0, sizeof (client_address));
-    socklen_t remote_addrlen = sizeof (client_address);
-
+    
     //--BIND-LISTEN-ACCEPT--
     bindingOperations(socketNum, server_address);
     listeningOperations(socketNum, portNumber);
-    int client_socket = acceptingOperations(socketNum, client_address, remote_addrlen);
     
-    //RECV -- SEND
-    commClients(client_socket);
+    //ACCEPT - RECV -- SEND
+    commClients(socketNum);
     
     //Soketlerin Kapatılması
-    shutdown(client_socket, SHUT_RDWR);
     shutdown(socketNum, SHUT_RDWR);
     return 0;
 }
@@ -88,7 +81,7 @@ void bindingOperations(int socketNum, sockaddr_in socketAddress) {
 //Listen - Dinleme İşlemleri
 void listeningOperations(int socketNum, int portNum) {
     //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
-    if ((listen(socketNum, 1)) < 0) {
+    if ((listen(socketNum, max_thread)) < 0) {
         perror("Socket dinleme başarısız. \n");
         exit(0);
     } else
@@ -96,9 +89,14 @@ void listeningOperations(int socketNum, int portNum) {
 }
 
 //Accept - Bağlantı Kabul İşlemleri
-int acceptingOperations(int socketNum, sockaddr_in client_address, socklen_t address_size) {
+int acceptingOperations(int socketNum) 
+{
     //Bağlantı kurmak isteyen Client hakkındaki verileri accept verisi ile bir socket adresi struct'ı içerisine tanımlıyoruz.
-    int client_socket = accept(socketNum, (struct sockaddr *) &client_address, &address_size);
+    struct sockaddr_in client_address;
+    memset(&client_address, 0, sizeof (client_address));
+    socklen_t remote_addrlen = sizeof (client_address);
+    
+    int client_socket = accept(socketNum, (struct sockaddr *) &client_address, &remote_addrlen);
     if (client_socket < 0) // 1 Hata - 0 Client'in bağlantısı kesildi.
     {
         perror("Bağlantı kurulamadı.");
@@ -115,7 +113,7 @@ int acceptingOperations(int socketNum, sockaddr_in client_address, socklen_t add
 }
 
 //Recv - Client tarafından gönderilen verilen kaydedilmesi.
-void recvOperations(int socketNum)
+void recvOperations(int socketNum, char buffer[])
 {
     int bytes_received = recv(socketNum, buffer, BUFF_LEN - 1, 0);
     if (bytes_received < 0) {
@@ -129,7 +127,7 @@ void recvOperations(int socketNum)
 }
 
 //Send - Sunucunun Client'e Mesaj Gönderim İşlemleri
-void sendingOperations(int socketNum) 
+void sendingOperations(int socketNum, char buffer[]) 
 {
     std::string response = std::string(buffer) + " _Veri alındı\n\n";
     
@@ -139,30 +137,28 @@ void sendingOperations(int socketNum)
     }
 }
 
-
 //Recv - Send Thread Alanı
 void commClients(int socketNum)
 {
+    char buffer[BUFF_LEN];
+    
+    int client_socket = acceptingOperations(socketNum);
+    
     while (1) 
     {
         memset(buffer, 0, BUFF_LEN); //Client'in kullandığı ara belleği her bağlantı öncesi temizliyoruz.
         //--RECV--
-        recvOperations(socketNum);
+        recvOperations(client_socket, buffer);
         
         //Eğer client tarafından 'exit' girilirse client socketini kapat. 
         if (std::string(buffer) == "exit")
         {
-            closeSocket(socketNum);
+            std::cout << "\nClient çıkış işlemi gerçekleştirdi...\n" << std::endl;
+            shutdown(client_socket, SHUT_RDWR);
             break;
         }
         else
             //--SEND--
-            sendingOperations(socketNum); //Alınan mesajın sonuna " _Veri alındı." ekleyerek Client'e geri döndürür.
+            sendingOperations(client_socket, buffer); //Alınan mesajın sonuna " _Veri alındı." ekleyerek Client'e geri döndürür.
     }
-}
-
-//Socket kapatma işlemi.
-void closeSocket(int socketNum) {
-    std::cout << "\nClient çıkış işlemi gerçekleştirdi...\n" << std::endl;
-    shutdown(socketNum, SHUT_RDWR);
 }
