@@ -3,13 +3,9 @@
  * Information Sources: https://www.youtube.com/watch?v=CFe5LQOPdfk --- https://www.yusufsezer.com.tr/c-cpp-soket/ -- https://my.eng.utah.edu/~cs4400/concurrency.pdf
  * Created on August 2, 2022, 10:34 AM
  * 
- * Usage
- * SERVER
- * g++ -std=c++11 echo_server.cpp -o server
- * ./server 5000
- * 
- * CLIENT
- * nc localhost 5000
+ * --USAGE--
+ * SERVER -> g++ -std=c++11 echo_server.cpp -o server -> ./server 5000
+ * CLIENT -> nc localhost 5000
  */
 
 #include <iostream>
@@ -18,10 +14,58 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <string>
+#include <thread>
 
 //İçerik aktarımı için ara bellek tanımlanması
 #define BUFF_LEN 1024
 char buffer[BUFF_LEN];
+
+//Donanımın max. kaldırabileceği thread sayısı döndürür.
+static int max_thread = std::thread::hardware_concurrency();
+
+//Fonksiyon Tanımları
+int getPortNumber(int, char**);
+void bindingOperations(int, sockaddr_in);
+void listeningOperations(int, int);
+int acceptingOperations(int, sockaddr_in, socklen_t);
+void recvOperations(int);
+void sendingOperations(int);
+void commClients(int);
+void closeSocket(int);
+
+
+int main(int argc, char** argv) {
+
+    //Port numarasının alınması.
+    int portNumber = getPortNumber(argc, argv);
+    
+    //Haberleşme için port tanımı. --- Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
+    int socketNum = socket(AF_INET, SOCK_STREAM, 0);
+
+    // Sunucu ve client için socket ip ilişkilendirilmesi.
+    struct sockaddr_in server_address, client_address;
+    memset(&server_address, 0, sizeof (server_address));
+    server_address.sin_family = AF_INET; //(IPv4)
+    server_address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler.
+
+    memset(&client_address, 0, sizeof (client_address));
+    socklen_t remote_addrlen = sizeof (client_address);
+
+    //--BIND-LISTEN-ACCEPT--
+    bindingOperations(socketNum, server_address);
+    listeningOperations(socketNum, portNumber);
+    int client_socket = acceptingOperations(socketNum, client_address, remote_addrlen);
+    
+    //RECV -- SEND
+    commClients(client_socket);
+    
+    //Soketlerin Kapatılması
+    shutdown(client_socket, SHUT_RDWR);
+    shutdown(socketNum, SHUT_RDWR);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 
 //Haberleşme için Server'ın kullacığı port numarasının alınması.
 int getPortNumber(int argc, char** argv) {
@@ -64,82 +108,61 @@ int acceptingOperations(int socketNum, sockaddr_in client_address, socklen_t add
         exit(0);
     }
     std::string client_ip = inet_ntoa(client_address.sin_addr); //inet_ntoa -> Bilgisayar adresini IPv4 olarak ondalık diziye dönüştürür.
-    int remote_port = ntohs(client_address.sin_port); //htons fonksiyonun tersini gerçekleştirir.
+    int remote_port = ntohs(client_address.sin_port);           //htons fonksiyonun tersini gerçekleştirir.
     std::cout << "Yeni bağlantı sağlandı. IP: " << client_ip << " Port:" << remote_port << std::endl;
 
     return client_socket;
 }
 
+//Recv - Client tarafından gönderilen verilen kaydedilmesi.
+void recvOperations(int socketNum)
+{
+    int bytes_received = recv(socketNum, buffer, BUFF_LEN - 1, 0);
+    if (bytes_received < 0) {
+        perror("Veri alınamadı.\n");
+        exit(0);
+    }
+    if (buffer[bytes_received - 1] == '\n') {
+        buffer[bytes_received - 1] = 0;
+    }
+    std::cout << "Client Mesajı: \"" << buffer << "\"" << std::endl;
+}
+
 //Send - Sunucunun Client'e Mesaj Gönderim İşlemleri
-void sendingOperations(int socketNum, std::string message) {
-    if ((send(socketNum, message.c_str(), message.length(), 0)) < 0) {
+void sendingOperations(int socketNum) 
+{
+    std::string response = std::string(buffer) + " _Veri alındı\n\n";
+    
+    if ((send(socketNum, response.c_str(), response.length(), 0)) < 0) {
         perror("Cevap gönderilemedi.");
         exit(0);
     }
 }
 
-//Socket kapatma işlemi.
-void closeSocket(int socketNum) {
-    std::cout << "\nKullanıcı çıkış işlemi gerçekleştirildi...\n" << std::endl;
-    shutdown(socketNum, SHUT_RDWR);
-}
 
-//------------------------------------------------------------------------------
-
-int main(int argc, char** argv) {
-
-    //Port numarasının alınması.
-    int portNumber = getPortNumber(argc, argv);
-
-    //Haberleşme için port tanımı. --- Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
-    int socketNum = socket(AF_INET, SOCK_STREAM, 0);
-
-    // Sunucu ve client için socket ip ilişkilendirilmesi.
-    struct sockaddr_in server_address, client_address;
-    memset(&server_address, 0, sizeof (server_address));
-    server_address.sin_family = AF_INET; //(IPv4)
-    server_address.sin_port = htons(portNumber); //Htons bilgisayarlar arasında byte önceliklendirmesini haberleşme için düzenler.
-
-    memset(&client_address, 0, sizeof (client_address));
-    socklen_t remote_addrlen = sizeof (client_address);
-
-    //--BIND--
-    bindingOperations(socketNum, server_address);
-
-    //--LISTEN--
-    listeningOperations(socketNum, portNumber);
-
-    //--ACCEPT--
-    int client_socket = acceptingOperations(socketNum, client_address, remote_addrlen);
-
-    while (1) {
+//Recv - Send Thread Alanı
+void commClients(int socketNum)
+{
+    while (1) 
+    {
         memset(buffer, 0, BUFF_LEN); //Client'in kullandığı ara belleği her bağlantı öncesi temizliyoruz.
         //--RECV--
-        int bytes_received = recv(client_socket, buffer, BUFF_LEN - 1, 0);
-        if (bytes_received < 0) {
-            perror("Veri alınamadı.\n");
-            return 1;
-        }
-        if (bytes_received == 0) {
-            std::cout << "Bağlantı sonlandırıldı." << std::endl;
-            break;
-        }
-        if (buffer[bytes_received - 1] == '\n') {
-            buffer[bytes_received - 1] = 0;
-        }
-        std::cout << "Client Mesajı: \"" << buffer << "\"" << std::endl;
-
-        //--SEND--
-        std::string response = std::string(buffer) + " _Veri alındı\n\n";
-
+        recvOperations(socketNum);
+        
         //Eğer client tarafından 'exit' girilirse client socketini kapat. 
         if (std::string(buffer) == "exit")
-            closeSocket(client_socket);
+        {
+            closeSocket(socketNum);
+            break;
+        }
         else
-            sendingOperations(client_socket, response);
+            //--SEND--
+            sendingOperations(socketNum); //Alınan mesajın sonuna " _Veri alındı." ekleyerek Client'e geri döndürür.
     }
+}
 
-    shutdown(client_socket, SHUT_RDWR);
+//Socket kapatma işlemi.
+void closeSocket(int socketNum) {
+    std::cout << "\nClient çıkış işlemi gerçekleştirdi...\n" << std::endl;
     shutdown(socketNum, SHUT_RDWR);
-    return 0;
 }
