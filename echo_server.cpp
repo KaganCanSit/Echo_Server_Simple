@@ -144,8 +144,6 @@ void sendingOperations(int socketNum, char buffer[])
 //Recv - Send Thread Alanı
 void commClients(int socketNum, int client_socket, int thread_id)
 {    
-    
-    std::cout << "Socket: " << socketNum << " Client_socket: " << client_socket << std::endl;
     char buffer[BUFF_LEN];
     
     while(1)
