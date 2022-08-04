@@ -1,4 +1,4 @@
-Echo Server Simple
+# Echo Server Simple
 
 An echo server example in which multiple clients can be connected. Created with C ++. It can be used in a simple way with the terminal. For this;
 
@@ -8,6 +8,7 @@ To use the server;
 
 > ./server 
 
+<hr>
 
 After compiling the server with the above operations, perform the following steps through a new BASH window. You must connect to the server with the client to the port address you have given as a parameter.
 To use the client;
