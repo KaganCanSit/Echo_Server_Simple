@@ -19,8 +19,10 @@
 //İçerik aktarımı için ara bellek değer tanımı.
 #define BUFF_LEN 1024
 
-//Donanımın max. kaldırabileceği thread sayısı döndürür.
+//Donanımın max. kaldırabileceği thread sayısı ve thread tanımı.
 static int max_thread = std::thread::hardware_concurrency();
+std::thread commthreads;
+int thread_counter = 0;
 
 //Fonksiyon Tanımları
 int getPortNumber(int, char**);
@@ -29,8 +31,8 @@ void listeningOperations(int, int);
 int acceptingOperations(int);
 void recvOperations(int, char[]);
 void sendingOperations(int, char[]);
-void commClients(int, int);
-
+void commClients(int, int, int);
+void threadOperations(int, int);
 
 int main(int argc, char** argv) {
 
@@ -48,15 +50,9 @@ int main(int argc, char** argv) {
     
     //--BIND-LISTEN-ACCEPT--
     bindingOperations(socketNum, server_address);
-    listeningOperations(socketNum, portNumber);
-    int client_socket = acceptingOperations(socketNum);
-   
-    //Thread Tanımları
-    //int thread_counter=0;
-    //pthread_t accept_thread[max_thread];
     
     //RECV -- SEND
-    commClients(socketNum, client_socket);
+    threadOperations(socketNum, portNumber);
        
     //Soketlerin Kapatılması
     shutdown(socketNum, SHUT_RDWR);
@@ -84,18 +80,21 @@ void bindingOperations(int socketNum, sockaddr_in socketAddress) {
 }
 
 //Listen - Dinleme İşlemleri
-void listeningOperations(int socketNum, int portNum) {
+void listeningOperations(int socketNum, int portNum) 
+{
     //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
-    if ((listen(socketNum, max_thread)) < 0) {
+    if ((listen(socketNum, max_thread)) < 0)
+    {
         perror("Socket dinleme başarısız. \n");
         exit(0);
-    } else
-        std::cout << "\nSunucu " << portNum << " numaralı portu dinliyor. Bağlantı bekleniyor." << std::endl;
+    }
+    //else
+        //std::cout << "\nSunucu " << portNum << " numaralı portu dinliyor. Bağlantı bekleniyor." << std::endl; 
 }
 
 //Accept - Bağlantı Kabul İşlemleri
 int acceptingOperations(int socketNum) 
-{
+{    
     //Bağlantı kurmak isteyen Client hakkındaki verileri accept verisi ile bir socket adresi struct'ı içerisine tanımlıyoruz.
     struct sockaddr_in client_address;
     memset(&client_address, 0, sizeof (client_address));
@@ -143,8 +142,10 @@ void sendingOperations(int socketNum, char buffer[])
 }
 
 //Recv - Send Thread Alanı
-void commClients(int socketNum, int client_socket)
+void commClients(int socketNum, int client_socket, int thread_id)
 {    
+    
+    std::cout << "Socket: " << socketNum << " Client_socket: " << client_socket << std::endl;
     char buffer[BUFF_LEN];
     
     while(1)
@@ -157,11 +158,31 @@ void commClients(int socketNum, int client_socket)
         if (std::string(buffer) == "exit")
         {
             std::cout << "\nClient çıkış işlemi gerçekleştirdi...\n" << std::endl;
+            thread_counter--;
             shutdown(client_socket, SHUT_RDWR);
             break;
         }
         else
             //--SEND--
             sendingOperations(client_socket, buffer); //Alınan mesajın sonuna " _Veri alındı." ekleyerek Client'e geri döndürür.
+    }
+}
+
+void threadOperations(int socketNum, int portNumber)
+{
+    while(1)
+    {
+        listeningOperations(socketNum, portNumber);
+    
+        int client_socket = acceptingOperations(socketNum);
+
+        //Thread Tanımları
+        if(thread_counter < max_thread)
+        {
+            //RECV -- SEND
+            std::thread commthreads(commClients, socketNum, client_socket, thread_counter);
+            thread_counter++;
+            commthreads.detach();  
+        }
     }
 }
