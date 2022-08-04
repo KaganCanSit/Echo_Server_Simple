@@ -26,10 +26,10 @@ static int max_thread = std::thread::hardware_concurrency();
 int getPortNumber(int, char**);
 void bindingOperations(int, sockaddr_in);
 void listeningOperations(int, int);
-int acceptingOperations(int, sockaddr_in);
+int acceptingOperations(int);
 void recvOperations(int, char[]);
 void sendingOperations(int, char[]);
-void commClients(int);
+void commClients(int, int);
 
 
 int main(int argc, char** argv) {
@@ -49,10 +49,15 @@ int main(int argc, char** argv) {
     //--BIND-LISTEN-ACCEPT--
     bindingOperations(socketNum, server_address);
     listeningOperations(socketNum, portNumber);
+    int client_socket = acceptingOperations(socketNum);
+   
+    //Thread Tanımları
+    //int thread_counter=0;
+    //pthread_t accept_thread[max_thread];
     
-    //ACCEPT - RECV -- SEND
-    commClients(socketNum);
-    
+    //RECV -- SEND
+    commClients(socketNum, client_socket);
+       
     //Soketlerin Kapatılması
     shutdown(socketNum, SHUT_RDWR);
     return 0;
@@ -138,13 +143,11 @@ void sendingOperations(int socketNum, char buffer[])
 }
 
 //Recv - Send Thread Alanı
-void commClients(int socketNum)
-{
+void commClients(int socketNum, int client_socket)
+{    
     char buffer[BUFF_LEN];
     
-    int client_socket = acceptingOperations(socketNum);
-    
-    while (1) 
+    while(1)
     {
         memset(buffer, 0, BUFF_LEN); //Client'in kullandığı ara belleği her bağlantı öncesi temizliyoruz.
         //--RECV--
