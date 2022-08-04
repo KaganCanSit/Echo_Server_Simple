@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     
     //Haberleşme için port tanımı. --- Socket Fonk. -> 1.Par: AF_INET (IPv4), AF_INET6 (IPv6)  // 2.Par -> SOCK_STREAM (TCP), SOCK_DGRAM (UDP) // 3.Par -> Transfer Prot.
     int socketNum = socket(AF_INET, SOCK_STREAM, 0);
-
+    
     // Sunucu ve client için socket ip ilişkilendirilmesi.
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof (server_address));
@@ -53,9 +53,9 @@ int main(int argc, char** argv) {
     
     //RECV -- SEND
     threadOperations(socketNum, portNumber);
-       
+    
     //Soketlerin Kapatılması
-    shutdown(socketNum, SHUT_RDWR);
+    //shutdown(socketNum, SHUT_RDWR);
     return 0;
 }
 
@@ -168,6 +168,7 @@ void commClients(int socketNum, int client_socket, int thread_id)
     }
 }
 
+//Thread İşlemleri
 void threadOperations(int socketNum, int portNumber)
 {
     while(1)
