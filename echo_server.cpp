@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     //RECV -- SEND
     threadOperations(socketNum, portNumber);
     
-    //Soketlerin Kapatılması
+    //Soketlerin Kapatılması -- Server'e bağlı hiç client kalmadığı durumlarda "threadOperations" içerisinde basit bir if ile break eklenerek aşağıdaki method kullanılabilir.
     //shutdown(socketNum, SHUT_RDWR);
     return 0;
 }
