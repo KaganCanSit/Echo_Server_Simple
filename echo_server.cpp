@@ -27,7 +27,7 @@ int thread_counter = 0;
 //Fonksiyon Tanımları
 int getPortNumber(int, char**);
 void bindingOperations(int, sockaddr_in);
-void listeningOperations(int, int);
+void listeningOperations(int);
 int acceptingOperations(int);
 void recvOperations(int, char[]);
 void sendingOperations(int, char[]);
@@ -80,7 +80,7 @@ void bindingOperations(int socketNum, sockaddr_in socketAddress) {
 }
 
 //Listen - Dinleme İşlemleri
-void listeningOperations(int socketNum, int portNum) 
+void listeningOperations(int socketNum) 
 {
     //Hangi Port Numarası, kaç kişi için dinleneceğini belirtiyoruz. Fazla istek sonucu parametre sonrası kabul edilmez.
     if ((listen(socketNum, max_thread)) < 0)
